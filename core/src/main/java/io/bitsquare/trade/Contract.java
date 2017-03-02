@@ -25,6 +25,7 @@ import io.bitsquare.p2p.NodeAddress;
 import io.bitsquare.payment.PaymentAccountContractData;
 import io.bitsquare.trade.offer.Offer;
 import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.Utils;
 import org.bitcoinj.utils.Fiat;
 
 import javax.annotation.concurrent.Immutable;
@@ -60,9 +61,9 @@ public final class Contract implements Payload {
     private final String offererPayoutAddressString;
     private final String takerPayoutAddressString;
     @JsonExclude
-    private final byte[] offererBtcPubKey;
+    private final byte[] offererMultiSigPubKey;
     @JsonExclude
-    private final byte[] takerBtcPubKey;
+    private final byte[] takerMultiSigPubKey;
 
     public Contract(Offer offer,
                     Coin tradeAmount,
@@ -80,8 +81,8 @@ public final class Contract implements Payload {
                     PubKeyRing takerPubKeyRing,
                     String offererPayoutAddressString,
                     String takerPayoutAddressString,
-                    byte[] offererBtcPubKey,
-                    byte[] takerBtcPubKey) {
+                    byte[] offererMultiSigPubKey,
+                    byte[] takerMultiSigPubKey) {
         this.offer = offer;
         this.tradePrice = tradePrice.value;
         this.buyerNodeAddress = buyerNodeAddress;
@@ -98,8 +99,8 @@ public final class Contract implements Payload {
         this.takerPubKeyRing = takerPubKeyRing;
         this.offererPayoutAddressString = offererPayoutAddressString;
         this.takerPayoutAddressString = takerPayoutAddressString;
-        this.offererBtcPubKey = offererBtcPubKey;
-        this.takerBtcPubKey = takerBtcPubKey;
+        this.offererMultiSigPubKey = offererMultiSigPubKey;
+        this.takerMultiSigPubKey = takerMultiSigPubKey;
     }
 
     public boolean isBuyerOffererAndSellerTaker() {
@@ -131,12 +132,12 @@ public final class Contract implements Payload {
         return isBuyerOffererAndSellerTaker ? takerPubKeyRing : offererPubKeyRing;
     }
 
-    public byte[] getBuyerBtcPubKey() {
-        return isBuyerOffererAndSellerTaker ? offererBtcPubKey : takerBtcPubKey;
+    public byte[] getBuyerMultiSigPubKey() {
+        return isBuyerOffererAndSellerTaker ? offererMultiSigPubKey : takerMultiSigPubKey;
     }
 
-    public byte[] getSellerBtcPubKey() {
-        return isBuyerOffererAndSellerTaker ? takerBtcPubKey : offererBtcPubKey;
+    public byte[] getSellerMultiSigPubKey() {
+        return isBuyerOffererAndSellerTaker ? takerMultiSigPubKey : offererMultiSigPubKey;
     }
 
     public PaymentAccountContractData getBuyerPaymentAccountContractData() {
@@ -206,8 +207,8 @@ public final class Contract implements Payload {
             return false;
         if (takerPayoutAddressString != null ? !takerPayoutAddressString.equals(contract.takerPayoutAddressString) : contract.takerPayoutAddressString != null)
             return false;
-        if (!Arrays.equals(offererBtcPubKey, contract.offererBtcPubKey)) return false;
-        return Arrays.equals(takerBtcPubKey, contract.takerBtcPubKey);
+        if (!Arrays.equals(offererMultiSigPubKey, contract.offererMultiSigPubKey)) return false;
+        return Arrays.equals(takerMultiSigPubKey, contract.takerMultiSigPubKey);
 
     }
 
@@ -229,8 +230,8 @@ public final class Contract implements Payload {
         result = 31 * result + (sellerNodeAddress != null ? sellerNodeAddress.hashCode() : 0);
         result = 31 * result + (offererPayoutAddressString != null ? offererPayoutAddressString.hashCode() : 0);
         result = 31 * result + (takerPayoutAddressString != null ? takerPayoutAddressString.hashCode() : 0);
-        result = 31 * result + (offererBtcPubKey != null ? Arrays.hashCode(offererBtcPubKey) : 0);
-        result = 31 * result + (takerBtcPubKey != null ? Arrays.hashCode(takerBtcPubKey) : 0);
+        result = 31 * result + (offererMultiSigPubKey != null ? Arrays.hashCode(offererMultiSigPubKey) : 0);
+        result = 31 * result + (takerMultiSigPubKey != null ? Arrays.hashCode(takerMultiSigPubKey) : 0);
         return result;
     }
 
@@ -253,8 +254,10 @@ public final class Contract implements Payload {
                 "\n\tsellerAddress=" + sellerNodeAddress +
                 "\n\toffererPayoutAddressString='" + offererPayoutAddressString + '\'' +
                 "\n\ttakerPayoutAddressString='" + takerPayoutAddressString + '\'' +
-                "\n\toffererBtcPubKey=" + Arrays.toString(offererBtcPubKey) +
-                "\n\ttakerBtcPubKey=" + Arrays.toString(takerBtcPubKey) +
+                "\n\toffererMultiSigPubKey=" + Utils.HEX.encode(offererMultiSigPubKey) +
+                "\n\ttakerMultiSigPubKey=" + Utils.HEX.encode(takerMultiSigPubKey) +
+                "\n\tBuyerMultiSigPubKey=" + Utils.HEX.encode(getBuyerMultiSigPubKey()) +
+                "\n\tSellerMultiSigPubKey=" + Utils.HEX.encode(getSellerMultiSigPubKey()) +
                 '}';
     }
 }

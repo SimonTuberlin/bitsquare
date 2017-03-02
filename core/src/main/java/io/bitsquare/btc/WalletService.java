@@ -144,13 +144,17 @@ public class WalletService {
             switch (socks5DiscoverModes[i]) {
                 case "ADDR":
                     mode |= Socks5MultiDiscovery.SOCKS5_DISCOVER_ADDR;
+                    break;
                 case "DNS":
                     mode |= Socks5MultiDiscovery.SOCKS5_DISCOVER_DNS;
+                    break;
                 case "ONION":
                     mode |= Socks5MultiDiscovery.SOCKS5_DISCOVER_ONION;
+                    break;
                 case "ALL":
                 default:
                     mode |= Socks5MultiDiscovery.SOCKS5_DISCOVER_ALL;
+                    break;
             }
         }
         socks5DiscoverMode = mode;
@@ -449,7 +453,6 @@ public class WalletService {
     public void decryptWallet(@NotNull KeyParameter key) {
         wallet.decrypt(key);
         addressEntryList.stream().forEach(e -> {
-
             final DeterministicKey keyPair = e.getKeyPair();
             if (keyPair != null && keyPair.isEncrypted())
                 e.setDeterministicKey(keyPair.decrypt(key));
@@ -515,20 +518,20 @@ public class WalletService {
                 .filter(e -> offerId.equals(e.getOfferId()))
                 .filter(e -> context == e.getContext())
                 .findAny();
-        if (addressEntry.isPresent())
+        if (addressEntry.isPresent()) {
             return addressEntry.get();
-        else
-            return addressEntryList.addAddressEntry(new AddressEntry(wallet.freshReceiveKey(), wallet.getParams(), context, offerId));
+        } else {
+            AddressEntry entry = addressEntryList.addAddressEntry(new AddressEntry(wallet.freshReceiveKey(), wallet.getParams(), context, offerId));
+            saveAddressEntryList();
+            return entry;
+        }
     }
 
     public AddressEntry getOrCreateAddressEntry(AddressEntry.Context context) {
         Optional<AddressEntry> addressEntry = getAddressEntryListAsImmutableList().stream()
                 .filter(e -> context == e.getContext())
                 .findAny();
-        if (addressEntry.isPresent())
-            return addressEntry.get();
-        else
-            return addressEntryList.addAddressEntry(new AddressEntry(wallet.freshReceiveKey(), wallet.getParams(), context));
+        return getOrCreateAddressEntry(context, addressEntry);
     }
 
     public AddressEntry getOrCreateUnusedAddressEntry(AddressEntry.Context context) {
@@ -536,10 +539,17 @@ public class WalletService {
                 .filter(e -> context == e.getContext())
                 .filter(e -> getNumTxOutputsForAddress(e.getAddress()) == 0)
                 .findAny();
-        if (addressEntry.isPresent())
+        return getOrCreateAddressEntry(context, addressEntry);
+    }
+
+    private AddressEntry getOrCreateAddressEntry(AddressEntry.Context context, Optional<AddressEntry> addressEntry) {
+        if (addressEntry.isPresent()) {
             return addressEntry.get();
-        else
-            return addressEntryList.addAddressEntry(new AddressEntry(wallet.freshReceiveKey(), wallet.getParams(), context));
+        } else {
+            AddressEntry entry = addressEntryList.addAddressEntry(new AddressEntry(wallet.freshReceiveKey(), wallet.getParams(), context));
+            saveAddressEntryList();
+            return entry;
+        }
     }
 
     public Optional<AddressEntry> findAddressEntry(String address, AddressEntry.Context context) {
@@ -576,7 +586,10 @@ public class WalletService {
                 .filter(e -> offerId.equals(e.getOfferId()))
                 .filter(e -> context == e.getContext())
                 .findAny();
-        addressEntryOptional.ifPresent(addressEntryList::swapToAvailable);
+        addressEntryOptional.ifPresent(e -> {
+            addressEntryList.swapToAvailable(e);
+            saveAddressEntryList();
+        });
     }
 
     public void swapAnyTradeEntryContextToAvailableEntry(String offerId) {
@@ -815,7 +828,7 @@ public class WalletService {
                     }
                 }
                 if (sendResult != null) {
-                    log.debug("Broadcasting double spending transaction. " + newTransaction);
+                    log.info("Broadcasting double spending transaction. " + sendResult.tx);
                     Futures.addCallback(sendResult.broadcastComplete, new FutureCallback<Transaction>() {
                         @Override
                         public void onSuccess(Transaction result) {
@@ -831,6 +844,7 @@ public class WalletService {
                     });
                 }
             } else {
+                log.warn("sendResult is null");
                 errorMessageHandler.handleErrorMessage("We could not find inputs we control in the transaction we want to double spend.");
             }
         } else if (confidenceType == TransactionConfidence.ConfidenceType.BUILDING) {
@@ -1009,16 +1023,19 @@ public class WalletService {
             throws InsufficientMoneyException, AddressFormatException {
         Wallet.SendRequest sendRequest = Wallet.SendRequest.emptyWallet(new Address(params, toAddress));
         sendRequest.aesKey = aesKey;
-        Wallet.SendResult sendResult = wallet.sendCoins(sendRequest);
         sendRequest.feePerKb = FeePolicy.getNonTradeFeePerKb();
+        Wallet.SendResult sendResult = wallet.sendCoins(sendRequest);
+        log.info("emptyWallet: " + sendResult.tx);
         Futures.addCallback(sendResult.broadcastComplete, new FutureCallback<Transaction>() {
             @Override
             public void onSuccess(Transaction result) {
+                log.info("onSuccess Transaction=" + result);
                 resultHandler.handleResult();
             }
 
             @Override
             public void onFailure(@NotNull Throwable t) {
+                log.error("onFailure " + t.toString());
                 errorMessageHandler.handleErrorMessage(t.getMessage());
             }
         });

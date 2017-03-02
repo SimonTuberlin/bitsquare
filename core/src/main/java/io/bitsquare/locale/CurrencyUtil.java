@@ -183,6 +183,7 @@ public class CurrencyUtil {
         result.add(new CryptoCurrency("XLM", "Stellar Lumens"));
         result.add(new CryptoCurrency("SJCX", "StorjcoinX"));
         result.add(new CryptoCurrency("STRAT", "Stratis"));
+        result.add(new CryptoCurrency("SWT", "Swarm City Token"));
         result.add(new CryptoCurrency("SYNX", "Syndicate"));
         result.add(new CryptoCurrency("AMP", "Synereo", true));
         result.add(new CryptoCurrency("TRI", "Triangles"));
@@ -199,8 +200,19 @@ public class CurrencyUtil {
         result.add(new CryptoCurrency("YBC", "YbCoin"));
         result.add(new CryptoCurrency("ZEC", "Zcash"));
         result.add(new CryptoCurrency("XZC", "Zcoin"));
-        
+
         result.sort(TradeCurrency::compareTo);
+
+        // Util for printing all altcoins for adding to FAQ page
+        StringBuilder sb = new StringBuilder();
+        result.stream().forEach(e -> sb.append("<li>\"")
+                .append(e.getCode())
+                .append("\", \"")
+                .append(e.getName())
+                .append("\"</li>")
+                .append("\n"));
+        //log.info(sb.toString());
+        
         return result;
     }
 
