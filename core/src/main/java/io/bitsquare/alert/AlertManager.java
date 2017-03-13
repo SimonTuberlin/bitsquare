@@ -47,7 +47,7 @@ public class AlertManager {
     private final ObjectProperty<Alert> alertMessageProperty = new SimpleObjectProperty<>();
 
     // Pub key for developer global alert message
-    private static final String pubKeyAsHex = "036d8a1dfcb406886037d2381da006358722823e1940acc2598c844bbc0fd1026f";
+    private static final String pubKeyAsHex = "027a381b5333a56e1cc3d90d3a7d07f26509adf7029ed06fc997c656621f8da1ee";
     private ECKey alertSigningKey;
 
 
