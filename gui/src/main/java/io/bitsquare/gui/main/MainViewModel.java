@@ -47,10 +47,7 @@ import io.bitsquare.gui.components.BalanceWithConfirmationTextField;
 import io.bitsquare.gui.components.TxIdTextField;
 import io.bitsquare.gui.main.overlays.notifications.NotificationCenter;
 import io.bitsquare.gui.main.overlays.popups.Popup;
-import io.bitsquare.gui.main.overlays.windows.AddBitcoinNodesWindow;
-import io.bitsquare.gui.main.overlays.windows.DisplayAlertMessageWindow;
-import io.bitsquare.gui.main.overlays.windows.TacWindow;
-import io.bitsquare.gui.main.overlays.windows.WalletPasswordWindow;
+import io.bitsquare.gui.main.overlays.windows.*;
 import io.bitsquare.gui.util.BSFormatter;
 import io.bitsquare.gui.util.GUIUtil;
 import io.bitsquare.locale.CurrencyUtil;
@@ -929,10 +926,11 @@ public class MainViewModel implements ViewModel {
     private void displayAlertIfPresent(Alert alert) {
         boolean alreadyDisplayed = alert != null && alert.equals(user.getDisplayedAlert());
         user.setDisplayedAlert(alert);
-        if (alert != null &&
-                !alreadyDisplayed &&
-                (!alert.isUpdateInfo || alert.isNewVersion()))
-            new DisplayAlertMessageWindow().alertMessage(alert).show();
+        if (alert != null && !alreadyDisplayed)
+            if (alert.isUpdateInfo || alert.isNewVersion())
+                new DisplayUpdateDownloadWindow().alertMessage(alert).show();
+            else
+                new DisplayAlertMessageWindow().alertMessage(alert).show();
     }
 
     private void displayPrivateNotification(PrivateNotification privateNotification) {

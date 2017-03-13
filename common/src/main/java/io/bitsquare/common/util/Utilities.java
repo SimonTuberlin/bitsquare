@@ -24,6 +24,8 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.*;
 import io.bitsquare.io.LookAheadObjectInputStream;
+import javafx.concurrent.Task;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -34,7 +36,9 @@ import org.slf4j.LoggerFactory;
 import javax.crypto.Cipher;
 import java.awt.*;
 import java.io.*;
+import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URL;
 import java.net.URLConnection;
 import java.security.NoSuchAlgorithmException;
 import java.util.Locale;
@@ -203,6 +207,20 @@ public class Utilities {
             if (!DesktopUtil.open(directory))
                 throw new IOException("Failed to open directory: " + directory.toString());
         }
+    }
+
+    public static File downloadFile(String fileURL, String saveDir, ProgressIndicator indicator) throws IOException {
+        DownloadUtil task;
+        if (saveDir != null)
+            task = new DownloadUtil(fileURL, saveDir);
+        else
+            task = new DownloadUtil(fileURL); // Tries to use system temp directory
+        if (indicator != null) {
+            indicator.progressProperty().unbind();
+            indicator.progressProperty().bind(task.progressProperty());
+        }
+        Thread th = new Thread(task);
+        th.start();
     }
 
     public static void printSystemLoad() {
