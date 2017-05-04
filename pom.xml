@@ -92,12 +92,17 @@
             <version>3.0</version>
         </dependency>
 
-        <!--crypto-->
+        <!--crypto
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk15on</artifactId>
             <version>1.53</version>
-        </dependency>
+        </dependency-->
+	<dependency>
+	    <groupId>org.bouncycastle</groupId>
+	    <artifactId>bcpg-jdk16</artifactId>
+	    <version>1.46</version>
+	</dependency>
 
         <!--utils-->
         <dependency>
